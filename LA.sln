@@ -5,7 +5,12 @@ VisualStudioVersion = 17.4.33110.190
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Patterns", "SystemDesign\Patterns\Patterns.csproj", "{EF78D8C3-F0FA-4E31-978F-E0510603A336}"
 EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "SystemDesign", "SystemDesign", "{A3658B95-8827-4ADB-8527-B1A89FD22D54}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "AbstractDesign", "AbstractDesign", "{A3658B95-8827-4ADB-8527-B1A89FD22D54}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{029190AB-D443-4D10-85F6-C6D214C10770}"
+	ProjectSection(SolutionItems) = preProject
+		Паттерны.pptx = Паттерны.pptx
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
