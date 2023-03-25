@@ -38,11 +38,11 @@ public class ReliabilityController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IEnumerable<WeatherForecast>> GetDataWithoutCache() =>
+    public async Task<IEnumerable<WeatherForecast>?> GetDataWithoutCache() =>
         await GetDataWithDelay();
 
     [HttpGet]
-    public async Task<IEnumerable<WeatherForecast>> InternalCache() =>
+    public async Task<IEnumerable<WeatherForecast>?> InternalCache() =>
         await _memoryCache.GetOrCreateAsync(
             _cacheKey,
             async cacheEntry =>
@@ -52,9 +52,9 @@ public class ReliabilityController : ControllerBase
             });
 
     [HttpGet]
-    public async Task<IEnumerable<WeatherForecast>> DistributedCache()
+    public async Task<IEnumerable<WeatherForecast>?> DistributedCache()
     {
-        IEnumerable<WeatherForecast> list;
+        IEnumerable<WeatherForecast>? list;
         string bytes;
 
         var data = await _distributedCache.GetAsync(_cacheKey);
@@ -79,7 +79,7 @@ public class ReliabilityController : ControllerBase
         return list;
     }
 
-    private static async Task<IEnumerable<WeatherForecast>> GetDataWithDelay()
+    private static async Task<IEnumerable<WeatherForecast>?> GetDataWithDelay()
     {
         var rand = new Random();
         var delay = rand.Next(10, 1500);
