@@ -9,15 +9,9 @@ IHost host = Host.CreateDefaultBuilder(args)
             .AddScoped<IEndpoint>(sp => sp.GetRequiredService<CountryRouter>());
         services.AddHostedService<Worker>();
 
-        services
-            .AddHttpClient(
-                "loyalty",
-                client =>
-                {
-                    client.BaseAddress = new Uri("http://localhost:5089");
-                    client.Timeout = TimeSpan.FromMilliseconds(500);
-                })
-            .TryAddTypedClient<ICustomHttpClient>((_, client) => new CustomHttpClient(client));
+       // services.AddCustomHttpClient_WithTimeout();
+        services.AddCustomHttpClient_WithRetry();
+        
     })
     .Build();
 
