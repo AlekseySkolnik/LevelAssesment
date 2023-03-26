@@ -1,11 +1,21 @@
 using Polly;
 using Reliability.Client.HttpClientResiliencePolicies.RetryPolicy;
+using Polly.Extensions.Http;
+using Polly.Timeout;
 
 namespace Reliability.Client.HttpClientResiliencePolicies;
 
 public static class PolicyBuilderExtension
 {
-    public static IAsyncPolicy<HttpResponseMessage> WaitAndRetryAsync(
+    public static IHttpClientBuilder AddRetryPolicy(
+        this IHttpClientBuilder clientBuilder,
+        RetryPolicySettings settings)
+    {
+        return clientBuilder.AddPolicyHandler(HttpPolicyExtensions.HandleTransientHttpError()
+            .Or<TimeoutRejectedException>().CustomWaitAndRetryAsync(settings));
+    }
+    
+    public static IAsyncPolicy<HttpResponseMessage> CustomWaitAndRetryAsync(
         this PolicyBuilder<HttpResponseMessage> policyBuilder,
         RetryPolicySettings settings)
     {

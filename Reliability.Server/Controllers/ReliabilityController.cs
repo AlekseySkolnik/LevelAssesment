@@ -1,5 +1,4 @@
 using System.Net;
-using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
@@ -38,18 +37,23 @@ public class ReliabilityController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IEnumerable<WeatherForecast>?> GetDataWithoutCache() =>
-        await GetDataWithDelay();
+    public async Task<IEnumerable<WeatherForecast>?> GetDataWithoutCache()
+    {
+        return await GetDataWithDelay();
+    }
 
     [HttpGet]
-    public async Task<IEnumerable<WeatherForecast>?> InternalCache() =>
-        await _memoryCache.GetOrCreateAsync(
-            _cacheKey,
-            async cacheEntry =>
-            {
-                cacheEntry.AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(20);
-                return await GetDataWithDelay();
-            });
+    public async Task<IEnumerable<WeatherForecast>?> InternalCache()
+    {
+        return
+            await _memoryCache.GetOrCreateAsync(
+                _cacheKey,
+                async cacheEntry =>
+                {
+                    cacheEntry.AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(20);
+                    return await GetDataWithDelay();
+                });
+    }
 
     [HttpGet]
     public async Task<IEnumerable<WeatherForecast>?> DistributedCache()
@@ -72,20 +76,34 @@ public class ReliabilityController : ControllerBase
             var options = new DistributedCacheEntryOptions()
                 .SetSlidingExpiration(TimeSpan.FromMinutes(5))
                 .SetAbsoluteExpiration(DateTime.Now.AddHours(6));
-            
+
             await _distributedCache.SetAsync(_cacheKey, data, options);
         }
-        
+
         return list;
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> GetDataWithoutCacheWithRandomInternalServerError()
+    {
+        var data = await GetDataWithDelay();
+
+        return DateTimeOffset.UtcNow.Second % 5 == 0
+            ? StatusCode((int)HttpStatusCode.InternalServerError, new { reason = "InternalServerError" })
+            : Ok(data);
     }
 
     private static async Task<IEnumerable<WeatherForecast>?> GetDataWithDelay()
     {
         var rand = new Random();
-        var delay = rand.Next(10, 1500);
-
+        var delay = rand.Next(10, 600);
         await Task.Delay(delay);
 
+        return await GetData();
+    }
+
+    private static async Task<IEnumerable<WeatherForecast>?> GetData()
+    {
         return
             Enumerable.Range(1, 5).Select(index => new WeatherForecast
                 {

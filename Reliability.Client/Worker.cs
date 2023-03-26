@@ -28,7 +28,11 @@ public class Worker : BackgroundService
             }
             catch (TaskCanceledException tce)
             {
-                _logger.LogError("Response failed: Timeout...");
+                _logger.LogError($"Response failed: Message = {tce.Message}");
+            }
+            catch (HttpRequestException re)
+            {
+                _logger.LogError(re, $"Response failed: StatusCode = {re.StatusCode}, Message = {re.Message}");
             }
             catch (Exception e)
             {

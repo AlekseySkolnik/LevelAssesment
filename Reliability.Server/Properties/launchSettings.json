@@ -9,7 +9,7 @@
     }
   },
   "profiles": {
-    "http": {
+    "Reliability.Server": {
       "commandName": "Project",
       "dotnetRunMessages": true,
       "launchBrowser": true,

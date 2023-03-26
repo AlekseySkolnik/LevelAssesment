@@ -1,9 +1,7 @@
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Polly;
 using IHttpClientFactory = System.Net.Http.IHttpClientFactory;
 using Polly.Extensions.Http;
-using Polly.Timeout;
-using Reliability.Client.HttpClientResiliencePolicies.RetryPolicy;
-using Reliability.Client.HttpClientResiliencePolicies;
 
 namespace Reliability.Client.CustomHttpClient;
 
@@ -34,11 +32,34 @@ public static class ExternalServicesConfig
                 client =>
                 {
                     client.BaseAddress = _baseAddress;
-                    client.Timeout = TimeSpan.FromMilliseconds(900);
+                    client.Timeout = TimeSpan.FromMilliseconds(1200);
                 })
-            // Запрос с 2мя ретраями
-            .AddRetryPolicy(RetryPolicySettings.Jitter(2, TimeSpan.FromMilliseconds(100)))
+            .AddPolicyHandler((services, request) => HttpPolicyExtensions.HandleTransientHttpError()
+                .WaitAndRetryAsync(new[]
+                    {
+                        TimeSpan.FromMicroseconds(50),
+                        TimeSpan.FromMicroseconds(150),
+                        TimeSpan.FromMicroseconds(500)
+                    },
+                    onRetry: (outcome, timespan, retryAttempt, context) =>
+                    {
+                        services.GetService<ILogger<CustomHttpClient>>()?
+                            .LogWarning("Delaying for {delay}ms, then making retry {retry}.",
+                                timespan.TotalMilliseconds, retryAttempt);
+                    }))
             .TryAddTypedClient<ICustomHttpClient>((_, client) => new CustomHttpClient(client));
+
+        // services
+        //     .AddHttpClient(
+        //         "reliability",
+        //         client =>
+        //         {
+        //             client.BaseAddress = _baseAddress;
+        //             client.Timeout = TimeSpan.FromMilliseconds(900);
+        //         })
+        //     // Запрос с 2мя ретраями
+        //     .AddRetryPolicy(RetryPolicySettings.Jitter(2, TimeSpan.FromMilliseconds(100)))
+        //     .TryAddTypedClient<ICustomHttpClient>((_, client) => new CustomHttpClient(client));
 
         return services;
     }
@@ -57,13 +78,5 @@ public static class ExternalServicesConfig
                 return factory(endpoint, client);
             }
         );
-    }
-
-    public static IHttpClientBuilder AddRetryPolicy(
-        this IHttpClientBuilder clientBuilder,
-        RetryPolicySettings settings)
-    {
-        return clientBuilder.AddPolicyHandler(HttpPolicyExtensions.HandleTransientHttpError()
-            .Or<TimeoutRejectedException>().WaitAndRetryAsync(settings));
     }
 }
