@@ -88,7 +88,7 @@ public class ReliabilityController : ControllerBase
     {
         var data = await GetDataWithDelay();
 
-        return DateTimeOffset.UtcNow.Second % 5 == 0
+        return DateTimeOffset.UtcNow.Second % 9 == 0
             ? StatusCode((int)HttpStatusCode.InternalServerError, new { reason = "InternalServerError" })
             : Ok(data);
     }
@@ -96,7 +96,7 @@ public class ReliabilityController : ControllerBase
     private static async Task<IEnumerable<WeatherForecast>?> GetDataWithDelay()
     {
         var rand = new Random();
-        var delay = rand.Next(10, 600);
+        var delay = rand.Next(100, 900);
         await Task.Delay(delay);
 
         return await GetData();

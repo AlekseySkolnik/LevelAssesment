@@ -26,7 +26,16 @@ public static class ExternalServicesConfig
             .AddHttpClient(
                 "reliability",
                 client => { client.BaseAddress = _baseAddress; })
-            .AddPolicyHandler(Policy.TimeoutAsync<HttpResponseMessage>(TimeSpan.FromMilliseconds(1200)))
+            .AddPolicyHandler((services, request) =>
+            {
+                return Policy.TimeoutAsync<HttpResponseMessage>(TimeSpan.FromMilliseconds(500),
+                    onTimeoutAsync: async (context, span, arg3, arg4) =>
+                    {
+                        services.GetService<ILogger<CustomHttpClient>>()?
+                            .LogWarning("Timeout {span}ms",
+                                span.TotalMilliseconds);
+                    });
+            })
             .TryAddTypedClient<ICustomHttpClient>((_, client) => new CustomHttpClient(client));
 
         return services;
@@ -47,9 +56,9 @@ public static class ExternalServicesConfig
                     .HandleTransientHttpError()
                     .WaitAndRetryAsync(new[]
                         {
-                            TimeSpan.FromMicroseconds(50),
-                            TimeSpan.FromMicroseconds(150),
-                            TimeSpan.FromMicroseconds(500)
+                            TimeSpan.FromMilliseconds(50),
+                            TimeSpan.FromMilliseconds(150),
+                            TimeSpan.FromMilliseconds(500)
                         },
                         onRetry: (outcome, timespan, retryAttempt, context) =>
                         {
