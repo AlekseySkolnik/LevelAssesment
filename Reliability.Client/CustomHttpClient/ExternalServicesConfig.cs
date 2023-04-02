@@ -12,6 +12,7 @@ public static class ExternalServicesConfig
 
     public static IServiceCollection AddCustomHttpClient_WithTimeout(this IServiceCollection services)
     {
+        // Решение без Polly
         // services
         //     .AddHttpClient(
         //         "reliability",
@@ -22,6 +23,7 @@ public static class ExternalServicesConfig
         //         })
         //     .TryAddTypedClient<ICustomHttpClient>((_, client) => new CustomHttpClient(client));
 
+        // Решение с Polly 
         services
             .AddHttpClient(
                 "reliability",

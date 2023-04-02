@@ -33,7 +33,9 @@ public class ReliabilityController : ControllerBase
     [HttpGet]
     public ActionResult Timeout()
     {
-        return StatusCode((int)HttpStatusCode.GatewayTimeout, new { reason = "GatewayTimeout" });
+        return DateTimeOffset.UtcNow.Second % 9 == 0
+            ? StatusCode((int)HttpStatusCode.GatewayTimeout, new { reason = "GatewayTimeout" })
+            : StatusCode((int)HttpStatusCode.RequestTimeout, new { reason = "RequestTimeout" });
     }
 
     [HttpGet]
