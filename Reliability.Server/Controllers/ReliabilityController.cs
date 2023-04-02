@@ -33,7 +33,7 @@ public class ReliabilityController : ControllerBase
     [HttpGet]
     public ActionResult Timeout()
     {
-        return DateTimeOffset.UtcNow.Second % 9 == 0
+        return DateTimeOffset.UtcNow.Second % 3 == 0
             ? StatusCode((int)HttpStatusCode.GatewayTimeout, new { reason = "GatewayTimeout" })
             : StatusCode((int)HttpStatusCode.RequestTimeout, new { reason = "RequestTimeout" });
     }
@@ -93,6 +93,12 @@ public class ReliabilityController : ControllerBase
         return DateTimeOffset.UtcNow.Second % 9 == 0
             ? StatusCode((int)HttpStatusCode.InternalServerError, new { reason = "InternalServerError" })
             : Ok(data);
+    }
+    
+    [HttpGet]
+    public ActionResult CircuitBreaker()
+    {
+        return StatusCode((int)HttpStatusCode.TooManyRequests, new { reason = "TooManyRequests" });
     }
 
     private static async Task<IEnumerable<WeatherForecast>?> GetDataWithDelay()

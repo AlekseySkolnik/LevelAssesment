@@ -2,12 +2,13 @@ using Polly;
 using Reliability.Client.HttpClientResiliencePolicies.RetryPolicy;
 using Polly.Extensions.Http;
 using Polly.Timeout;
+using Reliability.Client.HttpClientResiliencePolicies.CircuitBreakerPolicy;
 
 namespace Reliability.Client.HttpClientResiliencePolicies;
 
 public static class PolicyBuilderExtension
 {
-    public static IHttpClientBuilder AddRetryPolicy(
+    public static IHttpClientBuilder CustomAddRetryPolicy(
         this IHttpClientBuilder clientBuilder,
         RetryPolicySettings settings)
     {
@@ -26,19 +27,19 @@ public static class PolicyBuilderExtension
                 handler.SleepDurationProvider,
                 handler.OnRetry);
     }
-    //
-    // public static IAsyncPolicy<HttpResponseMessage> AdvancedCircuitBreakerAsync(
-    //     this PolicyBuilder<HttpResponseMessage> policyBuilder,
-    //     CircuitBreakerPolicySettings settings)
-    // {
-    //     return policyBuilder
-    //         .AdvancedCircuitBreakerAsync(
-    //             settings.FailureThreshold,
-    //             settings.SamplingDuration,
-    //             settings.MinimumThroughput,
-    //             settings.DurationOfBreak,
-    //             settings.OnBreak,
-    //             settings.OnReset,
-    //             settings.OnHalfOpen);
-    // }
+    
+    public static IAsyncPolicy<HttpResponseMessage> CustomCircuitBreakerAsync(
+        this PolicyBuilder<HttpResponseMessage> policyBuilder,
+        CircuitBreakerPolicySettings settings)
+    {
+        return policyBuilder
+            .AdvancedCircuitBreakerAsync(
+                settings.FailureThreshold,
+                settings.SamplingDuration,
+                settings.MinimumThroughput,
+                settings.DurationOfBreak,
+                settings.OnBreak,
+                settings.OnReset,
+                settings.OnHalfOpen);
+    }
 }

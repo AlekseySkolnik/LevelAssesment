@@ -1,8 +1,14 @@
+using System.Net;
+using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Polly;
+using Polly.CircuitBreaker;
 using IHttpClientFactory = System.Net.Http.IHttpClientFactory;
 using Polly.Extensions.Http;
+using Polly.Retry;
+using Polly.Timeout;
 using Reliability.Client.HttpClientResiliencePolicies;
+using Reliability.Client.HttpClientResiliencePolicies.CircuitBreakerPolicy;
 
 namespace Reliability.Client.CustomHttpClient;
 
@@ -56,6 +62,7 @@ public static class ExternalServicesConfig
             .AddPolicyHandler((services, request) =>
                 HttpPolicyExtensions
                     .HandleTransientHttpError()
+                    .Or<TimeoutRejectedException>()
                     .WaitAndRetryAsync(new[]
                         {
                             TimeSpan.FromMilliseconds(50),
@@ -78,7 +85,60 @@ public static class ExternalServicesConfig
         //             client.BaseAddress = _baseAddress;
         //             client.Timeout = TimeSpan.FromMilliseconds(900);
         //         })
-        //     .AddRetryPolicy(RetryPolicySettings.Jitter(2, TimeSpan.FromMilliseconds(100)))
+        //     .CustomAddRetryPolicy(RetryPolicySettings.Jitter(2, TimeSpan.FromMilliseconds(100)))
+        //     .TryAddTypedClient<ICustomHttpClient>((_, client) => new CustomHttpClient(client));
+
+        return services;
+    }
+
+    public static IServiceCollection AddCustomHttpClient_WithCircuitBreaker(this IServiceCollection services)
+    {
+        services
+            .AddHttpClient(
+                "reliability",
+                client =>
+                {
+                    client.BaseAddress = _baseAddress;
+                })
+            .AddPolicyHandler(
+                HttpPolicyExtensions
+                    .HandleTransientHttpError()
+                    .Or<TimeoutRejectedException>()
+                    .OrResult(r => r.StatusCode == HttpStatusCode.TooManyRequests)
+                    .AdvancedCircuitBreakerAsync(
+                        failureThreshold: 0.5, // Break on >=50% actions result in handled exceptions...
+                        samplingDuration: TimeSpan.FromSeconds(10), // ... over any 10 second period
+                        minimumThroughput: 8, // ... provided at least 8 actions in the 10 second period.
+                        durationOfBreak: TimeSpan.FromSeconds(30), // Break for 30 seconds.
+                        onBreak: (result, state, arg3, arg4) =>
+                        {
+                            System.Diagnostics.Debug.WriteLine("Circuit breaker is open");
+                        },
+                        onReset: context =>
+                        {
+                            System.Diagnostics.Debug.WriteLine("Circuit breaker is closed");
+                        },
+                        onHalfOpen: () =>
+                        {
+                            System.Diagnostics.Debug.WriteLine("Circuit breaker is is half open");
+                        }
+                    ))
+            .TryAddTypedClient<ICustomHttpClient>((_, client) => new CustomHttpClient(client));
+
+        // services
+        //     .AddHttpClient(
+        //         "reliability",
+        //         client =>
+        //         {
+        //             client.BaseAddress = _baseAddress;
+        //             client.Timeout = TimeSpan.FromMilliseconds(1200);
+        //         })
+        //     .AddPolicyHandler((services, request) =>
+        //         HttpPolicyExtensions
+        //             .HandleTransientHttpError()
+        //             .Or<TimeoutRejectedException>()
+        //             .OrResult(r => r.StatusCode == (HttpStatusCode) 429) // Too Many Requests
+        //             .CustomCircuitBreakerAsync(new CircuitBreakerPolicySettings()))
         //     .TryAddTypedClient<ICustomHttpClient>((_, client) => new CustomHttpClient(client));
 
         return services;

@@ -36,7 +36,7 @@ public class Worker : BackgroundService
             }
             catch (Exception e)
             {
-                _logger.LogError(e, "Unknown error...");
+                _logger.LogError(e, $"{e.Message}");
             }
         }
     }

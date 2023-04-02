@@ -10,7 +10,8 @@ IHost host = Host.CreateDefaultBuilder(args)
         services.AddHostedService<Worker>();
         
         // services.AddCustomHttpClient_WithTimeout();
-        services.AddCustomHttpClient_WithRetry();
+        // services.AddCustomHttpClient_WithRetry();
+        services.AddCustomHttpClient_WithCircuitBreaker();
     })
     .Build();
 
