@@ -2,6 +2,7 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using Polly;
 using IHttpClientFactory = System.Net.Http.IHttpClientFactory;
 using Polly.Extensions.Http;
+using Reliability.Client.HttpClientResiliencePolicies;
 
 namespace Reliability.Client.CustomHttpClient;
 
@@ -11,14 +12,21 @@ public static class ExternalServicesConfig
 
     public static IServiceCollection AddCustomHttpClient_WithTimeout(this IServiceCollection services)
     {
+        // services
+        //     .AddHttpClient(
+        //         "reliability",
+        //         client =>
+        //         {
+        //             client.BaseAddress = _baseAddress;
+        //             client.Timeout = TimeSpan.FromMilliseconds(500);
+        //         })
+        //     .TryAddTypedClient<ICustomHttpClient>((_, client) => new CustomHttpClient(client));
+
         services
             .AddHttpClient(
                 "reliability",
-                client =>
-                {
-                    client.BaseAddress = _baseAddress;
-                    client.Timeout = TimeSpan.FromMilliseconds(500);
-                })
+                client => { client.BaseAddress = _baseAddress; })
+            .AddPolicyHandler(Policy.TimeoutAsync<HttpResponseMessage>(TimeSpan.FromMilliseconds(1200)))
             .TryAddTypedClient<ICustomHttpClient>((_, client) => new CustomHttpClient(client));
 
         return services;
@@ -34,19 +42,21 @@ public static class ExternalServicesConfig
                     client.BaseAddress = _baseAddress;
                     client.Timeout = TimeSpan.FromMilliseconds(1200);
                 })
-            .AddPolicyHandler((services, request) => HttpPolicyExtensions.HandleTransientHttpError()
-                .WaitAndRetryAsync(new[]
-                    {
-                        TimeSpan.FromMicroseconds(50),
-                        TimeSpan.FromMicroseconds(150),
-                        TimeSpan.FromMicroseconds(500)
-                    },
-                    onRetry: (outcome, timespan, retryAttempt, context) =>
-                    {
-                        services.GetService<ILogger<CustomHttpClient>>()?
-                            .LogWarning("Delaying for {delay}ms, then making retry {retry}.",
-                                timespan.TotalMilliseconds, retryAttempt);
-                    }))
+            .AddPolicyHandler((services, request) =>
+                HttpPolicyExtensions
+                    .HandleTransientHttpError()
+                    .WaitAndRetryAsync(new[]
+                        {
+                            TimeSpan.FromMicroseconds(50),
+                            TimeSpan.FromMicroseconds(150),
+                            TimeSpan.FromMicroseconds(500)
+                        },
+                        onRetry: (outcome, timespan, retryAttempt, context) =>
+                        {
+                            services.GetService<ILogger<CustomHttpClient>>()?
+                                .LogWarning("Delaying for {delay}ms, then making retry {retry}.",
+                                    timespan.TotalMilliseconds, retryAttempt);
+                        }))
             .TryAddTypedClient<ICustomHttpClient>((_, client) => new CustomHttpClient(client));
 
         // services
@@ -57,7 +67,6 @@ public static class ExternalServicesConfig
         //             client.BaseAddress = _baseAddress;
         //             client.Timeout = TimeSpan.FromMilliseconds(900);
         //         })
-        //     // Запрос с 2мя ретраями
         //     .AddRetryPolicy(RetryPolicySettings.Jitter(2, TimeSpan.FromMilliseconds(100)))
         //     .TryAddTypedClient<ICustomHttpClient>((_, client) => new CustomHttpClient(client));
 
@@ -72,9 +81,7 @@ public static class ExternalServicesConfig
             {
                 var scope = provider.CreateScope();
                 var endpoint = scope.ServiceProvider.GetService<IEndpoint>();
-                var client = provider.GetRequiredService<IHttpClientFactory>()
-                    .CreateClient(builder.Name);
-
+                var client = provider.GetRequiredService<IHttpClientFactory>().CreateClient(builder.Name);
                 return factory(endpoint, client);
             }
         );
