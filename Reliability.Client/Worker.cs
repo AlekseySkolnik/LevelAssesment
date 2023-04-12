@@ -23,7 +23,7 @@ public class Worker : BackgroundService
 
             try
             {
-                var dataFromServer = await _customHttpClient.GetDataWithoutCache(stoppingToken);
+                var dataFromServer = await _customHttpClient.GetDataFromServer(stoppingToken);
                 _logger.LogInformation($"Response is success: {JsonSerializer.Serialize(dataFromServer)}");
             }
             catch (TaskCanceledException tce)

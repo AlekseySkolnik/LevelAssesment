@@ -17,6 +17,7 @@ public class ReliabilityController : ControllerBase
     };
 
     private const string _cacheKey = "_cacheKey";
+    internal const string BulkheadUrl = "/api/GetDataWithoutCache";
 
     private readonly ILogger<ReliabilityController> _logger;
     private readonly IMemoryCache _memoryCache;
@@ -52,7 +53,7 @@ public class ReliabilityController : ControllerBase
                 _cacheKey,
                 async cacheEntry =>
                 {
-                    cacheEntry.AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(20);
+                    cacheEntry.AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(5);
                     return await GetDataWithDelay();
                 });
     }

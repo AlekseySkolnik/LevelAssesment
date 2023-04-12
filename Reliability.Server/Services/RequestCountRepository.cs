@@ -20,7 +20,7 @@ public class RequestCountRepository : IRequestCountRepository
         int limit, TimeSpan period, CancellationToken ct)
     {
         var _cacheKey = $"{method}_{controller}_{action}_{clientId}";
-        // TODO сохранить информацию по клинту
+        // TODO сохранить информацию по клиенту
         var info = new {};
         var bytes = JsonSerializer.Serialize(info);
         var data = Encoding.UTF8.GetBytes(bytes);
