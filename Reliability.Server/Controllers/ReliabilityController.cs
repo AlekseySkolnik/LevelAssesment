@@ -95,11 +95,18 @@ public class ReliabilityController : ControllerBase
             ? StatusCode((int)HttpStatusCode.InternalServerError, new { reason = "InternalServerError" })
             : Ok(data);
     }
-    
+
     [HttpGet]
-    public ActionResult CircuitBreaker()
+    public async Task<IActionResult> CircuitBreaker()
     {
-        return StatusCode((int)HttpStatusCode.TooManyRequests, new { reason = "TooManyRequests" });
+        return DateTimeOffset.UtcNow.Second switch
+        {
+            < 25 => StatusCode((int)HttpStatusCode.TooManyRequests, new { reason = "TooManyRequests" }),
+            > 25 and > 45 => DateTimeOffset.UtcNow.Second % 5 == 0
+                ? StatusCode((int)HttpStatusCode.TooManyRequests, new { reason = "TooManyRequests" })
+                : Ok(await GetData()),
+            _ => Ok(await GetData())
+        };
     }
 
     private static async Task<IEnumerable<WeatherForecast>?> GetDataWithDelay()

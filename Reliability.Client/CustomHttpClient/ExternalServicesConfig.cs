@@ -1,5 +1,4 @@
 using System.Net;
-using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Polly;
 using Polly.CircuitBreaker;
@@ -107,20 +106,26 @@ public static class ExternalServicesConfig
                     .OrResult(r => r.StatusCode == HttpStatusCode.TooManyRequests)
                     .AdvancedCircuitBreakerAsync(
                         failureThreshold: 0.5, // Break on >=50% actions result in handled exceptions...
-                        samplingDuration: TimeSpan.FromSeconds(10), // ... over any 10 second period
+                        samplingDuration: TimeSpan.FromSeconds(5), // ... over any 10 second period
                         minimumThroughput: 8, // ... provided at least 8 actions in the 10 second period.
-                        durationOfBreak: TimeSpan.FromSeconds(30), // Break for 30 seconds.
+                        durationOfBreak: TimeSpan.FromSeconds(5), // Break for 30 seconds.
                         onBreak: (result, state, arg3, arg4) =>
                         {
-                            System.Diagnostics.Debug.WriteLine("Circuit breaker is open");
+                            ApplicationLogging
+                                .For<CircuitBreakerPolicy>()
+                                .LogWarning($"---onBreak--- Circuit breaker is open. Prev state = {state}");
                         },
                         onReset: context =>
                         {
-                            System.Diagnostics.Debug.WriteLine("Circuit breaker is closed");
+                            ApplicationLogging
+                                .For<CircuitBreakerPolicy>()
+                                .LogWarning("---onReset--- Circuit breaker is closed");
                         },
                         onHalfOpen: () =>
                         {
-                            System.Diagnostics.Debug.WriteLine("Circuit breaker is is half open");
+                            ApplicationLogging
+                                .For<CircuitBreakerPolicy>()
+                                .LogWarning("---onHalfOpen--- Circuit breaker is half open");
                         }
                     ))
             .TryAddTypedClient<ICustomHttpClient>((_, client) => new CustomHttpClient(client));

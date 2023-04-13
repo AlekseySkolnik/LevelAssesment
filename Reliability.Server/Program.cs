@@ -1,3 +1,4 @@
+using Reliability.Extensions;
 using Reliability.Middlewares;
 using Reliability.Services;
 
@@ -14,7 +15,6 @@ builder.Services.AddStackExchangeRedisCache(options =>
 });
 builder.Services.AddScoped<IRequestCountRepository, RequestCountRepository>();
 builder.Services.AddScoped<IRequestLimitingService, RequestLimitingService>();
-
 
 var app = builder.Build();
 
