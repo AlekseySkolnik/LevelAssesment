@@ -13,9 +13,10 @@ public class CustomHttpClient : ICustomHttpClient
 
     public async Task<IEnumerable<WeatherForecast>> GetDataFromServer(CancellationToken ct)
     {
-         // var response = await _httpClient.GetAsync($"api/Timeout", ct); // для таймаута
+        // var response = await _httpClient.GetAsync($"api/Timeout", ct); // для таймаута
         // var response = await _httpClient.GetAsync($"api/GetDataWithoutCacheWithRandomInternalServerError", ct); // для ретраев
-         var response = await _httpClient.GetAsync($"api/CircuitBreaker", ct); // для СВ
+        // var response = await _httpClient.GetAsync($"api/CircuitBreaker", ct); // для СВ
+        var response = await _httpClient.GetAsync($"api/Bulkhead", ct); // для Bulkhead
 
         response.EnsureSuccessStatusCode();
         var readAsStreamAsync = await response.Content.ReadAsStreamAsync(ct);

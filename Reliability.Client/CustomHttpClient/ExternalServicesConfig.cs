@@ -8,6 +8,7 @@ using Polly.Retry;
 using Polly.Timeout;
 using Reliability.Client.HttpClientResiliencePolicies;
 using Reliability.Client.HttpClientResiliencePolicies.CircuitBreakerPolicy;
+using Reliability.Client.HttpClientResiliencePolicies.RetryPolicy;
 
 namespace Reliability.Client.CustomHttpClient;
 
@@ -145,6 +146,26 @@ public static class ExternalServicesConfig
         //             .OrResult(r => r.StatusCode == (HttpStatusCode) 429) // Too Many Requests
         //             .CustomCircuitBreakerAsync(new CircuitBreakerPolicySettings()))
         //     .TryAddTypedClient<ICustomHttpClient>((_, client) => new CustomHttpClient(client));
+
+        return services;
+    }
+    
+    public static IServiceCollection AddCustomHttpClient_ForBulkhead(this IServiceCollection services)
+    {
+        services.AddHttpClient("Bulkhead_success", client =>
+        {
+            client.BaseAddress = _baseAddress;
+        });
+
+        services
+            .AddHttpClient(
+                "Bulkhead_failed",
+                client =>
+                {
+                    client.BaseAddress = _baseAddress;
+                    client.Timeout = TimeSpan.FromMilliseconds(5000);
+                })
+            .CustomAddRetryPolicy(RetryPolicySettings.Jitter(10, TimeSpan.FromMilliseconds(10)));
 
         return services;
     }

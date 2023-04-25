@@ -1,6 +1,4 @@
-using Reliability.Extensions;
 using Reliability.Middlewares;
-using Reliability.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
@@ -13,8 +11,6 @@ builder.Services.AddStackExchangeRedisCache(options =>
 {
     options.Configuration = "127.0.0.1:6379";
 });
-builder.Services.AddScoped<IRequestCountRepository, RequestCountRepository>();
-builder.Services.AddScoped<IRequestLimitingService, RequestLimitingService>();
 
 var app = builder.Build();
 
@@ -28,7 +24,7 @@ app.UseHttpsRedirection();
 
 app.UseAuthorization();
 
-//app.UseMiddleware<BulkheadMiddleware>();
+app.UseMiddleware<BulkheadMiddleware>();
 
 app.MapControllers();
 

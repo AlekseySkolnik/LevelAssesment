@@ -17,7 +17,7 @@ public class ReliabilityController : ControllerBase
     };
 
     private const string _cacheKey = "_cacheKey";
-    internal const string BulkheadUrl = "/api/GetDataWithoutCache";
+    internal const string BulkheadUrl = "/api/Bulkhead";
 
     private readonly ILogger<ReliabilityController> _logger;
     private readonly IMemoryCache _memoryCache;
@@ -37,6 +37,12 @@ public class ReliabilityController : ControllerBase
         return DateTimeOffset.UtcNow.Second % 3 == 0
             ? StatusCode((int)HttpStatusCode.GatewayTimeout, new { reason = "GatewayTimeout" })
             : StatusCode((int)HttpStatusCode.RequestTimeout, new { reason = "RequestTimeout" });
+    }
+
+    [HttpGet]
+    public async Task<IEnumerable<WeatherForecast>?> GetDataSuccess()
+    {
+        return await GetData();
     }
 
     [HttpGet]
@@ -102,12 +108,38 @@ public class ReliabilityController : ControllerBase
         return DateTimeOffset.UtcNow.Second switch
         {
             < 25 => StatusCode((int)HttpStatusCode.TooManyRequests, new { reason = "TooManyRequests" }),
-            > 25 and > 45 => DateTimeOffset.UtcNow.Second % 5 == 0
+            > 25 and > 45 => DateTimeOffset.UtcNow.Second % 3 == 0
                 ? StatusCode((int)HttpStatusCode.TooManyRequests, new { reason = "TooManyRequests" })
                 : Ok(await GetData()),
             _ => Ok(await GetData())
         };
     }
+
+
+    [HttpGet]
+    public async Task<IActionResult> Bulkhead()
+    {
+        var task = Task.Factory.StartNew(() =>
+        {
+            long res = 1;
+
+            for (var i = 0; i < 100000000; i++)
+            {
+                res += 2 ^ i;
+            }
+
+            _logger.LogInformation($"res = {res}");
+        });
+
+        await task;
+
+        var data = await GetData();
+
+        return DateTimeOffset.UtcNow.Second % 2 == 0
+            ? StatusCode((int)HttpStatusCode.InternalServerError, new { reason = "InternalServerError" })
+            : Ok(data);
+    }
+
 
     private static async Task<IEnumerable<WeatherForecast>?> GetDataWithDelay()
     {

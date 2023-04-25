@@ -15,12 +15,12 @@ public class BulkheadMiddleware
     /// <summary>
     /// максимальное распараллеливание исполнений через Bulkhead;
     /// </summary>
-    private const int BulkheadMaxParallelization = 60;
-    
+    private const int BulkheadMaxParallelization = 20;
+
     /// <summary>
     /// максимальное количество действий, которые могут быть в очереди (ожидании получения слота выполнения) в любое время.
     /// </summary>
-    private const int BulkheadMaxQueuingActions = 20;
+    private const int BulkheadMaxQueuingActions = 10;
 
     private static readonly List<string> _notSkipBulkheadEndpoints = new()
     {
@@ -53,9 +53,10 @@ public class BulkheadMiddleware
         {
             await _bulkhead.ExecuteAsync(() => _next(context));
         }
-        catch (BulkheadRejectedException)
+        catch (BulkheadRejectedException ex)
         {
-            _logger.LogWarning(
+            _logger.LogError(
+                ex,
                 "Bulkhead rejected request: {Path}. Remote IP: {RemoteIpAddress}",
                 context.Request.Path,
                 context.Connection.RemoteIpAddress);
