@@ -3,15 +3,13 @@ using Reliability;
 
 namespace WorkerService1;
 
-public class BulkheadWorker : BackgroundService
+public class RateLimitWorker : BackgroundService
 {
-    private readonly ILogger<BulkheadWorker> _logger;
+    private readonly ILogger<RateLimitWorker> _logger;
     private readonly HttpClient _httpFailedClient;
     private readonly HttpClient _httpSuccessClient;
 
-    private const int BulkheadMaxParallelization = 30; // 30 работает, 31 уже нет
-
-    public BulkheadWorker(ILogger<BulkheadWorker> logger, IHttpClientFactory httpClientFactory)
+    public RateLimitWorker(ILogger<RateLimitWorker> logger, IHttpClientFactory httpClientFactory)
     {
         _logger = logger;
         _httpFailedClient = httpClientFactory.CreateClient("Bulkhead_success");
@@ -53,7 +51,7 @@ public class BulkheadWorker : BackgroundService
 
     private async Task GetDataBulkhead_Failed(CancellationToken ct)
     {
-        var taskList = Enumerable.Range(0, BulkheadMaxParallelization).Select(x => TaskBulkhead_Failed(x, ct));
+        var taskList = Enumerable.Range(0, 100).Select(x => TaskBulkhead_Failed(x, ct));
         await Task.WhenAll(taskList);
     }
 
