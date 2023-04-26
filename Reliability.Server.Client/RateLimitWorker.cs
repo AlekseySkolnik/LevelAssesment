@@ -9,7 +9,7 @@ public class RateLimitWorker : BackgroundService
     private readonly HttpClient _httpClientFixed;
     private readonly HttpClient _httpClientConcurrency;
 
-    private const int PermitLimit = 50; // 30 работает, 31 уже нет
+    private const int PermitLimit = 20; // 10 работает, 20 уже нет
 
     public RateLimitWorker(ILogger<RateLimitWorker> logger, IHttpClientFactory httpClientFactory)
     {
@@ -26,8 +26,8 @@ public class RateLimitWorker : BackgroundService
         while (!stoppingToken.IsCancellationRequested)
         {
             await Task.Delay(100, stoppingToken);
-            await RateLimiter_fixed(counter, stoppingToken);
-            //await RateLimiter_concurrency(stoppingToken);
+            // await RateLimiter_fixed(counter, stoppingToken);
+            await RateLimiter_concurrency(stoppingToken);
             counter++;
         }
     }
