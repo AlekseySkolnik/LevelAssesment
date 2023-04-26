@@ -135,9 +135,7 @@ public class ReliabilityController : ControllerBase
 
         var data = await GetData();
 
-        return DateTimeOffset.UtcNow.Second % 2 == 0
-            ? StatusCode((int)HttpStatusCode.InternalServerError, new { reason = "InternalServerError" })
-            : Ok(data);
+        return Ok(data);
     }
 
 

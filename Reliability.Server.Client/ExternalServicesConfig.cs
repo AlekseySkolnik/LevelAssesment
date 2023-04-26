@@ -7,7 +7,7 @@ public static class ExternalServicesConfig
 {
     private static readonly Uri BaseAddress = new Uri("http://localhost:5089");
 
-    public static IServiceCollection AddCustomHttpClient_ForBulkhead(this IServiceCollection services)
+    public static IServiceCollection AddCustomHttpClients(this IServiceCollection services)
     {
         services.AddHttpClient("Bulkhead_success", client => { client.BaseAddress = BaseAddress; });
 

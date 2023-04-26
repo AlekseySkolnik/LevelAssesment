@@ -9,7 +9,7 @@ public class BulkheadWorker : BackgroundService
     private readonly HttpClient _httpFailedClient;
     private readonly HttpClient _httpSuccessClient;
 
-    private const int BulkheadMaxParallelization = 30; // 30 работает, 31 уже нет
+    private const int BulkheadMaxParallelization = 20; // 29 работает, 31 уже нет
 
     public BulkheadWorker(ILogger<BulkheadWorker> logger, IHttpClientFactory httpClientFactory)
     {
@@ -20,9 +20,10 @@ public class BulkheadWorker : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        _logger.LogWarning("Worker running at: {time}", DateTimeOffset.Now);
+        
         while (!stoppingToken.IsCancellationRequested)
         {
-            _logger.LogInformation("Worker running at: {time}", DateTimeOffset.Now);
             await Task.Delay(5, stoppingToken);
 
             var sucTask = GetDataBulkhead_Success(stoppingToken);
@@ -43,7 +44,7 @@ public class BulkheadWorker : BackgroundService
             var result =
                 await JsonSerializer.DeserializeAsync<IEnumerable<WeatherForecast>?>(readAsStreamAsync,
                     new JsonSerializerOptions(), ct);
-            _logger.LogInformation($"GetDataBulkhead_Success result = {JsonSerializer.Serialize(result)}");
+            _logger.LogWarning($"GetDataBulkhead_Success result = {JsonSerializer.Serialize(result)}");
         }
         catch (Exception e)
         {
@@ -61,13 +62,13 @@ public class BulkheadWorker : BackgroundService
     {
         try
         {
-            _logger.LogInformation($"TaskBulkhead_Failed_{x}");
             var response = await _httpFailedClient.GetAsync("api/Bulkhead", ct);
+            response.EnsureSuccessStatusCode();
             var readAsStreamAsync = await response.Content.ReadAsStreamAsync(ct);
             var result =
                 await JsonSerializer.DeserializeAsync<IEnumerable<WeatherForecast>?>(readAsStreamAsync,
                     new JsonSerializerOptions(), ct);
-            _logger.LogInformation($"TaskBulkhead_Failed_{x} result = {JsonSerializer.Serialize(result)}");
+            _logger.LogWarning($"TaskBulkhead_Failed_{x} result = {JsonSerializer.Serialize(result)}");
         }
         catch (Exception e)
         {
