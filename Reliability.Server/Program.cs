@@ -45,7 +45,7 @@ builder.Services.AddRateLimiter(_ => _
     {
         options.PermitLimit = 10; //Максимальное количество разрешений, которые могут быть предоставлены одновременно.
         options.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
-        options.QueueLimit = 2; // Максимальное совокупное количество разрешений для запросов на получение в очереди.
+        options.QueueLimit = 1; // Максимальное совокупное количество разрешений для запросов на получение в очереди.
     }));
 
 
@@ -64,7 +64,11 @@ app.UseRateLimiter();
 app.MapGet("RateLimiter/fixed", () => Results.Ok(GetData()))
     .RequireRateLimiting("fixed");
 
-app.MapGet("RateLimiter/concurrency", () => Results.Ok(GetData())).RequireRateLimiting("concurrency");
+app.MapGet("RateLimiter/concurrency", async () =>
+{
+    await Task.Delay(50);
+    return Results.Ok(GetData());
+}).RequireRateLimiting("concurrency");
 
 app.UseMiddleware<BulkheadMiddleware>();
 
