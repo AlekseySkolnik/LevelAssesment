@@ -26,6 +26,9 @@ public static class ExternalServicesConfig
                     TimeoutPerTry = TimeSpan.FromMilliseconds(100),
                     RetryPolicySettings = RetryPolicySettings.Jitter(10, TimeSpan.FromMilliseconds(50))
                 });
+        
+        services.AddHttpClient("RateLimiter_fixed", client => { client.BaseAddress = BaseAddress; });
+        services.AddHttpClient("RateLimiter_concurrency", client => { client.BaseAddress = BaseAddress; });
 
         return services;
     }
