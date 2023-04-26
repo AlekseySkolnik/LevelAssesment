@@ -40,13 +40,16 @@ builder.Services.AddRateLimiter(_ => _
         options.QueueLimit = 2; // Максимальное совокупное количество разрешений для запросов на получение в очереди.
     }));
 // Concurrency limiter
-builder.Services.AddRateLimiter(_ => _
-    .AddConcurrencyLimiter(policyName: "concurrency", options =>
+builder.Services.AddRateLimiter(limiterOptions =>
+{
+    limiterOptions.AddConcurrencyLimiter(policyName: "concurrency", options =>
     {
         options.PermitLimit = 10; //Максимальное количество разрешений, которые могут быть предоставлены одновременно.
         options.QueueProcessingOrder = QueueProcessingOrder.OldestFirst;
         options.QueueLimit = 1; // Максимальное совокупное количество разрешений для запросов на получение в очереди.
-    }));
+    });
+    limiterOptions.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+});
 
 
 var app = builder.Build();
