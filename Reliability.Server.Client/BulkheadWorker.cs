@@ -14,8 +14,8 @@ public class BulkheadWorker : BackgroundService
     public BulkheadWorker(ILogger<BulkheadWorker> logger, IHttpClientFactory httpClientFactory)
     {
         _logger = logger;
-        _httpFailedClient = httpClientFactory.CreateClient("Bulkhead_success");
-        _httpSuccessClient = httpClientFactory.CreateClient("Bulkhead_failed");
+        _httpSuccessClient = httpClientFactory.CreateClient("Bulkhead_success");
+        _httpFailedClient = httpClientFactory.CreateClient("Bulkhead_failed");
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)

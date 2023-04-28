@@ -1,4 +1,5 @@
 using Dodo.HttpClientResiliencePolicies;
+using Dodo.HttpClientResiliencePolicies.CircuitBreakerPolicy;
 using Dodo.HttpClientResiliencePolicies.RetryPolicy;
 
 namespace WorkerService1;
@@ -17,14 +18,14 @@ public static class ExternalServicesConfig
                 client =>
                 {
                     client.BaseAddress = BaseAddress;
-                    client.Timeout = TimeSpan.FromMilliseconds(5000);
                 })
             .AddResiliencePolicies(
                 new ResiliencePoliciesSettings
                 {
-                    OverallTimeout = TimeSpan.FromMilliseconds(3000),
-                    TimeoutPerTry = TimeSpan.FromMilliseconds(100),
-                    RetryPolicySettings = RetryPolicySettings.Jitter(10, TimeSpan.FromMilliseconds(50))
+                    OverallTimeout = TimeSpan.FromMilliseconds(10000),
+                    TimeoutPerTry = TimeSpan.FromMilliseconds(1000),
+                    RetryPolicySettings = RetryPolicySettings.Jitter(10, TimeSpan.FromMilliseconds(50)),
+                    CircuitBreakerPolicySettings = new CircuitBreakerPolicySettings()
                 });
         
         services.AddHttpClient("RateLimiter_fixed", client => { client.BaseAddress = BaseAddress; });

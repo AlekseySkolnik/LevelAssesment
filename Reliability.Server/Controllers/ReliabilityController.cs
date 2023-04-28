@@ -133,7 +133,7 @@ public class ReliabilityController : ControllerBase
 
         await task;
 
-        var data = await GetData();
+        var data = await GetDataWithDelay();
 
         return Ok(data);
     }
